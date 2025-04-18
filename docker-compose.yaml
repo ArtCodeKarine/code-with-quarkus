@@ -1,0 +1,72 @@
+---
+version: "3.9"
+
+services:
+  chatbot:
+    build:
+      context: .
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: chatbot-service
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres_chatbot
+      - chroma
+    networks:
+      - chatbot
+    environment:
+      QUARKUS_LOG_LEVEL: INFO
+      CHATBOT_ENVIRONMENT: dev
+      QUARKUS_DATASOURCE_USERNAME: ${CHATBOT_DB_USER}
+      QUARKUS_DATASOURCE_PASSWORD: ${CHATBOT_DB_PASSWORD}
+      QUARKUS_DATASOURCE_JDBC_URL: ${CHATBOT_JDBC_URL}
+      QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION: none
+      QUARKUS_HIBERNATE_ORM_LOG_SQL: true
+
+  postgres_chatbot:
+    container_name: postgres_chatbot
+    image: postgres:17-alpine
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 256m
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - chatbot
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_DB}", "-d ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    environment:
+      POSTGRES_USER: super
+      POSTGRES_PASSWORD: ${CHATBOT_DB_PASSWORD}
+      POSTGRES_DB: postgres
+      TZ: Europe/Zurich
+
+  chroma:
+    image: ghcr.io/chroma-core/chroma:latest
+    container_name: chroma-db
+    ports:
+      - "57407:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - chatbot
+    environment:
+      - IS_PERSISTENT=TRUE
+    restart: unless-stopped
+
+networks:
+  chatbot:
+    driver: bridge
+
+volumes:
+  postgres_data: { }
+  chroma_data: { }
