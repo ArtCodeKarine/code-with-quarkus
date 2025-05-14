@@ -45,7 +45,7 @@ services:
       retries: 5
       start_period: 15s
     environment:
-      POSTGRES_USER: super
+      POSTGRES_USER: ${CHATBOT_DB_USER}
       POSTGRES_PASSWORD: ${CHATBOT_DB_PASSWORD}
       POSTGRES_DB: postgres
       TZ: Europe/Zurich
