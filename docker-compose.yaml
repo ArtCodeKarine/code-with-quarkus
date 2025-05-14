@@ -51,7 +51,7 @@ services:
       TZ: Europe/Zurich
 
   chroma:
-    image: ghcr.io/chroma-core/chroma:latest
+    image: chromadb/chroma:0.4.24
     container_name: chroma-db
     ports:
       - "57407:8000"
